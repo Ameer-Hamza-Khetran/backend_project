@@ -16,13 +16,12 @@ const registerUser = asyncHandler( async (req, res) => {
     // step9: return response
 
     const {username, email, fullname, password} = req.body
-    console.log(`username: ${username}`)
 
     if([username, email, fullname, password].some((field) => field?.trim() === "")) {
         throw new ApiError(400, "All fields are required")
     }
 
-    const existedUser = User.findOne({
+    const existedUser = await User.findOne({
         $or: [{ username }, { email }]
     })
 
@@ -55,7 +54,7 @@ const registerUser = asyncHandler( async (req, res) => {
 
     const createdUser = await User.findById(user._id).select("-password -refreshToken");
 
-    if (createdUser) {
+    if (!createdUser) {
         throw new ApiError(500, "Something went wrong while registering the user");
     }
 
