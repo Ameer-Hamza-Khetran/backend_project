@@ -3,6 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.models.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import { generateAccessAndRefreshTokens } from "../utils/generateTokens.js";
 
 const registerUser = asyncHandler( async (req, res) => {
     // step1: get the user detail from frontend (for now postman) according to the user Schmea
@@ -89,6 +90,32 @@ const loginUser = asyncHandler(async (req, res) => {
     if (!user) {
         throw new ApiError(404, 'User does not exist')
     }
+
+    const isPasswordValid = await user.isPasswordCorrect(password)
+
+    if(!isPasswordValid) {
+        throw new ApiError(401, 'Invalid user credentials')
+    }
+
+    const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id)
+
+    const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
+
+    return res
+    .status(200)
+    .cookie("accessToken", accessToken, { httpOnly: true, secure: true })
+    .cookie("refreshToken", refreshToken, { httpOnly: true, secure: true })
+    .json(
+        new ApiResponse(
+            200,
+            {
+                user: loggedInUser,
+                accessToken: accessToken,
+                refreshToken: refreshToken
+            },
+            "User loggedin successfully"
+        )
+    )
 })
 
 export { registerUser, loginUser }
