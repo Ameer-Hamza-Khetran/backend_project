@@ -1,7 +1,7 @@
-import { User } from "../models/user.models"
-import { ApiError } from "./ApiError"
+import { User } from "../models/user.models.js"
+import { ApiError } from "./ApiError.js"
 
-function generateAccessAndRefreshTokens(userId) {
+async function generateAccessAndRefreshTokens(userId) {
     try {
         const user = await User.findById(userId)
         const accessToken = user.generateAccessToken()
